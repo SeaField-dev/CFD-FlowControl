@@ -13,6 +13,7 @@ import datetime
 import pyautogui
 import random
 from os.path import exists
+import natsort
 
 # path to file location for the BodyData.txt file "File path----File Name"
 save_path = "D:\BScHons\DataSet\BodyData"
@@ -25,9 +26,9 @@ bodyArray = []
 gen_time = 6.403421149253845
 
 # Enter total number of shapes
-tShapes = 25000
+tShapes = 24000
 # Enter shapes to generate
-gShapes = 25000
+gShapes = 259
 
 
 # Checks if previous data exists
@@ -53,7 +54,7 @@ def check_data():
 # Opens shape generator
 def open_gen():
     pyautogui.hotkey('g', 's')
-    time.sleep(1.5)
+    time.sleep(2)
 
 
 # Sets/randomises shape features:
@@ -65,9 +66,13 @@ def open_gen():
 # accepts:
 #     mouse y-location
 #     range for random number generation
-def build_shape(locy, minrand, maxrand):
-    # set a random variable between th specified range per feature
-    num = int(random.uniform(minrand, maxrand))
+def build_shape(locy, minrand, maxrand, ID, val):
+    if ID == 1:
+        num = int(val)
+    else:
+        # set a random variable between th specified range per feature
+        num = int(random.uniform(minrand, maxrand))
+
     word = str(num)
 
     bodyArray.append(str(num) + ', ')
@@ -129,17 +134,22 @@ def build_bevel(locy, minrand, maxrand):
 # method for exporting/saving body
 # accepts:
 #   incremented shape number
-def export_shape(inc):
-    name = 'Shape_' + str(inc)
-    bodyArray.insert(0, name + ', ')
+def export_shape(inc, ver, ID):
+    if ver == 1:
+        name = ID
+    else:
+        name = 'Shape_' + str(inc)
+        bodyArray.insert(0, name + ', ')
 
     mouse.move(274, 241, absolute=True)
     mouse.click(button=mouse.LEFT)
 
-    time.sleep(0.5)
+    time.sleep(1)
 
     pyautogui.hotkey('ctrl', 'e')
     mouse.move(817, 580, absolute=True)
+    time.sleep(1)
+    mouse.move(820, 580, absolute=True)
     time.sleep(1)
     mouse.click(button=mouse.LEFT)
     time.sleep(1)
@@ -172,7 +182,10 @@ def create_file():
 #     No. of shapes to generate
 #     Total number of shapes required for the data set
 def gen_shape(no, size):
+    mouse.move(987, 500, absolute=True)
+    time.sleep(2)
     mouse.click(button=mouse.LEFT)
+    time.sleep(2)
 
     exp_time = str(datetime.timedelta(seconds=int(gen_time) * no))
 
@@ -188,16 +201,16 @@ def gen_shape(no, size):
 
             open_gen()
 
-            build_shape(425, 3, 175)
-            build_shape(515, 3, 175)
-            build_shape(570, 120, 360)
-            build_shape(620, 3, 64)
-            build_shape(680, 15, 350)
+            build_shape(425, 3, 175, 0, 0)
+            build_shape(515, 3, 175, 0, 0)
+            build_shape(570, 120, 360, 0, 0)
+            build_shape(620, 3, 64, 0, 0)
+            build_shape(680, 15, 350, 0, 0)
             build_bevel(805, -5, 10)
 
-            export_shape(x + data_no)
+            export_shape(x + data_no, 0, 0)
             create_file()
-            time.sleep(0.5)
+            time.sleep(1)
     print("==================================\n")
 
 
@@ -229,23 +242,179 @@ def clear_data():
 
 
 def del_shape(fsize):
-    if fsize % 50 == 0 and fsize != 0:
+    if fsize % 100 == 0 and fsize != 0:
+        time.sleep(30)
+    if fsize % 20 == 0 and fsize != 0:
         print("==================================")
         print("Clearing Memory")
+        print("Missing:", missing())
         print("==================================")
         mouse.move(224, 111, absolute=True)
-        time.sleep(0.2)
+        time.sleep(0.5)
         mouse.move(224, 176, absolute=True)
         mouse.click(button=mouse.LEFT)
-        time.sleep(0.2)
+        time.sleep(0.5)
         mouse.move(265, 225, absolute=True)
-        time.sleep(0.2)
+        time.sleep(0.5)
         pyautogui.press('enter')
 
         time.sleep(3)
+
+        if missing() > 0:
+            cleanData()
+            bodyArray.clear()
+            del_shape(fsize)
+
+
+def clean_bevel(locy, val):
+    if int(val) != 0:
+        num = int(val)
+        word = str(num)
+
+        mouse.move(280, locy, absolute=True)
+        mouse.click(button=mouse.LEFT)
+        pyautogui.write(word)
+        pyautogui.press('enter')
+
+
+def getBodies():
+    bodies = []
+
+    with open("bodies.txt", "w") as a:
+        for path, subdir, files in os.walk(r'D:\BScHons\DataSet\Bodys'):
+            for filename in files:
+                f = os.path.join(filename[6:])
+                j = f[:-4] + '\n'
+                bodies.append(j)
+                # a.write(str(f))
+        bodies.sort()
+        for body in natsort.natsorted(bodies, reverse=False):
+            a.write(body)
+
+
+def missing():
+    getBodies()
+
+    bodies = open('bodies.txt', 'r')
+    bodyData = open('D:\BScHons\DataSet\BodyData\BodyData.txt', 'r')
+
+    lines = bodies.readlines()
+    data = bodyData.readlines()
+
+    count = 0
+
+    with open("missing.txt", "w") as a:
+        for i in range(len(lines) - 1):
+            if i == len(data):
+                break
+            elif (int(lines[i + 1]) - int(lines[i])) > 1:
+
+                count += 1
+
+                mis = data[int(lines[i]) + 1]
+                a.write(mis)
+
+    misses = open('missing.txt', 'r')
+    miss = misses.readlines()
+
+    return len(miss)
+
+
+def clean():
+    if missing() > 0:
+        print("==================================\n" + "Cleaning: " + str(
+            missing()) + " Data Points!")
+
+        mouse.move(987, 500, absolute=True)
+        time.sleep(2)
+        mouse.click(button=mouse.LEFT)
+        time.sleep(2)
+
+        exp_time = str(datetime.timedelta(seconds=int(gen_time) * missing()))
+
+        print(str(missing()), " Missing bodies will take roughly: " + exp_time + " to generate")
+
+        misses = open('missing.txt', 'r')
+        miss = misses.readlines()
+
+        print("==================================\n" + "Generating Bodies")
+
+        # for non-inline data cleaning
+        # count = 0
+
+        for m in miss:
+
+            # for non-inline data cleaning
+            # del_shape(count)
+
+            shape = m.split(",", 9)
+
+            name = shape[0].strip()
+            radT = shape[1].strip()
+            radB = shape[2].strip()
+            angle = shape[3].strip()
+            edge = shape[4].strip()
+            height = shape[5].strip()
+            offset = shape[6].strip()
+            level = shape[7].strip()
+            weight = shape[8].strip()
+
+            print(name, radT, radB, angle, edge, height, offset, level, weight)
+
+            open_gen()
+
+            build_shape(425, 0, 0, 1, radT)
+            build_shape(515, 0, 0, 1, radB)
+            build_shape(570, 0, 0, 1, angle)
+            build_shape(620, 0, 0, 1, edge)
+            build_shape(680, 0, 0, 1, height)
+            clean_bevel(805, offset)
+            clean_bevel(860, level)
+            clean_bevel(895, weight)
+
+            export_shape(0, 1, name)
+            time.sleep(1)
+
+            # for non-inline data cleaning
+            # count +=1
+        print("==================================\n")
+
+
+def cleanData():
+    while missing() > 0:
+        clean()
+        bodyArray.clear()
+
+    else:
+        print("==================================\n" + "No Data Missing!\n" + "==================================\n")
+
+
+def check():
+    getBodies()
+
+    bodyData = open('D:\BScHons\DataSet\BodyData\BodyData.txt', 'r')
+    data = bodyData.readlines()
+
+    count = 0
+
+    for i in range(len(data)):
+        if i > 0:
+
+            dat1 = data[i][6:]
+            dat1j = dat1.split(",", 2)
+            dat1k = int(dat1j[0])
+
+            dat2 = data[i - 1][6:]
+            dat2j = dat2.split(",", 2)
+            dat2k = int(dat2[0])
+            # print(k)
+
+            if dat1k - dat2k != 1:
+                print(dat1k)
 
 
 if __name__ == '__main__':
     # run gen-shape methods with a specified number of bodies to create out of the final amount of bodies
     gen_shape(gShapes, tShapes)
-    # clear_data()
+    # cleanData()
+    # check()
