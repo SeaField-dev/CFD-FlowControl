@@ -1,4 +1,4 @@
-===========================INSTRUCTIONS=================================================================
+===========================INSTRUCTIONS=============================
 
 Requires SelfCAD - https://www.selfcad.com/download-for-pc
 
@@ -39,4 +39,4 @@ Requires SelfCAD - https://www.selfcad.com/download-for-pc
 14. Once some shapes have been generated run the 'check()' method to manually check if the data requires cleaning.
 15. If the 'check()' method produces an output run the 'cleanData()' method to manually force data cleaning.
 
-========================================================================================================
+====================================================================
